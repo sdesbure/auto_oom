@@ -6,6 +6,17 @@
     domain: "{{ ansible_env.OS_PROJECT_DOMAIN_NAME}}"
   register: project
 
+- name: update quotas for OOM
+  os_quota:
+    name: admin
+    cores: 320
+    ram: 327680
+    gigabytes: 2000
+    floating_ips: 40
+    instances: 40
+    snapshots: 80
+    volumes: 60
+
 - name: generate project_id variable
   set_fact:
     oom_tenant_id: "{{ project.project.id }}"
