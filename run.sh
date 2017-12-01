@@ -15,8 +15,6 @@ if [[ $EUID -ne 0 ]]; then
     exit -1
 fi
 
-cd ${target_folder}
-
 echo "
 #-------------------------------------------------------------------------------
 # Prepare nodes, oom and run oom
