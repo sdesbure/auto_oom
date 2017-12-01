@@ -1,0 +1,12 @@
+---
+
+- hosts: k8s-cluster
+  become: "yes"
+  roles:
+    - node_prepare
+
+- hosts: jumphost
+  roles:
+    - oom_prepare
+    - oom_configure
+    - oom_launch

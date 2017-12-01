@@ -1,0 +1,68 @@
+---
+- name: check if config has already been pushed
+  shell:
+    "helm ls --all | grep {{ onap_namespace }}-config | wc -l"
+  register: shell
+
+- name: check if we need to delete helm config
+  set_fact:
+    helm_config_launched: "{{ (shell.stdout_lines.0 | int) > 0 }}"
+
+- name: purge previous config
+  shell:
+    "helm del --purge {{ onap_namespace }}-config"
+  when: (helm_config_launched | bool)
+
+- name: launch config creation
+  shell:
+    "./createConfig.sh -n {{ onap_namespace }}"
+  args:
+    chdir: "{{ oom_path }}/kubernetes/config"
+  register: yolo
+
+- name: see output
+  debug: msg="{{ yolo | to_nice_json }}"
+
+- name: wait for creation to finish
+  shell:
+    "kubectl get pod --namespace={{ onap_namespace }} --show-all -o json"
+  register: kube
+
+- set_fact:
+    kube_json: "{{ kube.stdout | from_json }}"
+
+- name: see output
+  debug: msg="{{ (kube.stdout | from_json) | to_nice_json }}"
+
+- name: see output 2
+  debug: msg="{{ kube_json.items }}"
+
+- name: see output 3
+  debug: msg="{{ kube_json['items'].0 }}"
+
+- name: wait for creation to finish
+  shell:
+    "kubectl get pod --namespace={{ onap_namespace }} --show-all -o yaml"
+  register: kube
+  until: >
+    (kube.stdout | from_yaml)['items'][0].status.phase == 'Succeeded'
+  retries: 120
+  delay: 10
+
+# This is not Stateless (we should check if existing but not done)
+- name: launch installation
+  shell:
+    "export OPENSTACK_PRIVATE_KEY_PATH={{ private_key_name }} && \
+     ./setenv.bash && \
+     ./createAll.bash -n {{ onap_namespace }}"
+  args:
+    chdir: "{{ oom_path }}/kubernetes/oneclick"
+  register: yolo
+
+- name: see output
+  debug: msg="{{ yolo | to_nice_json }}"
+
+- name: grab a beer
+  debug:
+    msg: "          .:.\n        _oOoOo\n       \
+          [_|||||\n         |||||\n         ~~~~~"

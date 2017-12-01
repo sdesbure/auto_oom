@@ -1,0 +1,9 @@
+---
+# TODO: retrieve facts on Openstack to dynamically find subnet for etc export
+- name: create nfs server on controller
+  import_tasks: nfs_server.yaml
+  when: "'server' in group_names"
+
+- name: mount dockerdata in nfs
+  import_tasks: nfs_client.yaml
+  when: "'node' in group_names"

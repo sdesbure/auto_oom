@@ -1,0 +1,51 @@
+---
+stages:
+  - test
+  - deploy
+  - check
+
+variables:
+  target_folder: /opt/auto_oom
+  openstack_creds: /etc/bolla/openstack_openrc
+  pod: pod1
+
+.syntax_checking: &syntax_docker
+  stage: test
+  tags:
+    - shared
+    - docker
+    - innovation
+
+yaml_checking:
+  image: dockerproxy-iva.si.francetelecom.fr/sdesbure/yamllint:latest
+  script:
+    - yamllint .gitlab-ci.yml
+    - yamllint *.y?ml
+    - yamllint group_vars/all
+    - yamllint roles/*/tasks/*.y?ml
+  <<: *syntax_docker
+
+ansible_linting:
+  image: dockerproxy-iva.si.francetelecom.fr/sdesbure/ansible-lint:latest
+  script:
+    - ansible-lint -x ANSIBLE0010,ANSIBLE0013 opnfv-*.yaml
+  <<: *syntax_docker
+
+# Deploy
+.deploy_pod: &deploy_pod
+  stage: deploy
+  only:
+    - schedules
+    - triggers
+    - web
+  tags:
+    - sina
+    - shell
+  script:
+    - ssh ${pod}.opnfv.fr "sudo mkdir -p ${target_folder} ;
+                           sudo chown -R ubuntu.ubuntu ${target_folder}"
+    - "rsync --cvs-exclude -e ssh -avz  \
+      --delete-after . \
+      ${pod}.opnfv.fr:${target_folder}"
+    - ssh ${pod}.opnfv.fr "cd ${target_folder}; \
+      openstack_creds=${openstack_creds} sudo -E ./run.sh"

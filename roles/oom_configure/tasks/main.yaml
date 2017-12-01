@@ -1,0 +1,147 @@
+---
+- name: create OOM project
+  os_project:
+    name: "{{ oom_project_name}}"
+    state: present
+    domain: "{{ ansible_env.OS_PROJECT_DOMAIN_NAME}}"
+  register: project
+
+- name: generate project_id variable
+  set_fact:
+    oom_tenant_id: "{{ project.project.id }}"
+
+- name: add current user into OOM project as member
+  os_user_role:
+    user: "{{ ansible_env.OS_USERNAME }}"
+    role: _member_
+    project: "{{ oom_project_name}}"
+
+- name: add current user into OOM project as admin
+  os_user_role:
+    user: "{{ ansible_env.OS_USERNAME }}"
+    role: admin
+    project: "{{ oom_project_name}}"
+
+- name: add current user into OOM project as heat_stack_owner
+  os_user_role:
+    user: "{{ ansible_env.OS_USERNAME }}"
+    role: heat_stack_owner
+    project: "{{ oom_project_name}}"
+
+- name: create OOM private network
+  os_network:
+    project: "{{ oom_project_name }}"
+    name: "{{ oom_oam_network_name }}"
+    state: present
+  register: oom_private_network
+
+- name: generate oom private network id variable
+  set_fact:
+    oom_oam_network_id: "{{ oom_private_network.network.id }}"
+
+- name: create OOM private subnetwork
+  os_subnet:
+    state: present
+    network_name: "{{ oom_oam_network_name }}"
+    name: "{{ oom_oam_network_name }}-subnet"
+    cidr: "{{ oom_oam_subnet_cidr }}"
+    project: "{{ oom_project_name }}"
+  register: oom_private_subnet
+
+- name: generate oom private subnet id variable
+  set_fact:
+    oom_oam_subnet_id: "{{ oom_private_subnet.subnet.id }}"
+
+- name: create router
+  os_router:
+    project: "{{ oom_project_name }}"
+    state: present
+    name: "{{ oom_project_name }}"
+    network: "{{ public_network_name }}"
+    interfaces:
+      - "{{ oom_oam_network_name }}-subnet"
+
+- name: create OOM security group
+  os_security_group:
+    state: present
+    auth:
+      project_name: "{{ oom_project_name }}"
+    name: "{{ oom_project_name }}"
+    description: security group for ONAP OOM
+  register: security_group
+
+# TODO: give rules a lot more stringent
+- name: create security group ingress rule
+  os_security_group_rule:
+    auth:
+      project_name: "{{ oom_project_name }}"
+    security_group: "{{ oom_project_name }}"
+    state: present
+    remote_ip_prefix: 0.0.0.0/0
+    direction: ingress
+
+- name: generate security_group_id variable
+  set_fact:
+    oam_security_group_id:
+      "{{ security_group.secgroup.id }}"
+
+- name: retrieve ubuntu 16 image facts
+  os_image_facts:
+    image: "{{ ubuntu_16_image }}"
+  register: ubuntu_16_image_facts
+
+- name: generate ubuntu 16 id variable
+  set_fact:
+    ubuntu_16_image_id:
+      "{{ ubuntu_16_image_facts.
+          ansible_facts.
+          openstack_image.id }}"
+
+- name: retrieve centos 7 image facts
+  os_image_facts:
+    image: "{{ centos_7_image }}"
+  register: centos_7_image_facts
+
+- name: generate centos 7 id variable
+  set_fact:
+    centos_7_image_id:
+      "{{ centos_7_image_facts.
+          ansible_facts.
+          openstack_image.id }}"
+
+- name: retrieve public network facts
+  os_networks_facts:
+    name: "{{ public_network_name }}"
+  register: public_network
+
+- name: generate public network id variable
+  set_fact:
+    public_network_id:
+      "{{ public_network.ansible_facts.
+          openstack_networks.0.id }}"
+
+- name: retrieve flavor id
+  os_flavor_facts:
+    name: "{{ os_flavour_medium }}"
+    limit: 1
+  register: medium_flavour
+
+- name: generate flavor id variable
+  set_fact:
+    os_flavour_medium_id:
+      "{{ medium_flavour.ansible_facts.openstack_flavors.0.id }}"
+
+- name: generate config template
+  template:
+    src: onap-parameters.yaml.j2
+    dest: "{{ oom_path }}/kubernetes/config/onap-parameters.yaml"
+
+- name: generate dcae config template
+  template:
+    src: onap-parameters.yaml.j2
+    dest: "{{ oom_path }}/kubernetes/dcaegen2/dcae-parameters.yaml"
+
+- name: generate dcae config template sample
+  template:
+    src: onap-parameters.yaml.j2
+    dest: "{{ oom_path }}/kubernetes/dcaegen2/dcae-parameters-sample.yaml"

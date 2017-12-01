@@ -1,0 +1,16 @@
+### Ansible ###
+*.retry
+
+
+### Git ###
+*.orig
+
+### Visual Studio Code ###
+.vscode
+
+### OPNFV stuff ###
+vars/pdf*.yaml
+vars/idf*.yaml
+vars/certificats*.yaml
+vars/certificates.yaml
+.vault_pass.txt

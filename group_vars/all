@@ -1,0 +1,28 @@
+---
+oom_path: /opt/oom
+oom_url: https://gerrit.onap.org/r/oom
+oom_branch: master
+nfs_folder: /dockerdata-nfs
+
+# ONAP needed variables
+demo_artifacts_version: 1.1.0-SNAPSHOT
+dmaap_topic: AUTO
+os_service_tenant_name: services
+os_flavour_medium: onap.medium
+oom_project_name: oom
+oom_oam_network_name: oom-oam
+oom_oam_subnet_cidr: 192.168.74.0/24
+public_network_name: ext-net
+ubuntu_14_image: ubuntu-14.04-daily
+ubuntu_16_image: ubuntu-16.04-daily
+centos_7_image: centos-7
+location_code: onapr1
+location_domain: onap-dcaegen2
+onap_namespace: onap
+private_key_name: /home/ubuntu/.ssh/id_rsa
+
+
+# ONAP specific values, do not change unless you know what you do...
+codesource_url: https://nexus.onap.org/content/sites/raw
+codesource_version: org.onap.dcaegen2.deployments/releases/scripts/
+key_filename: /opt/dcae/key

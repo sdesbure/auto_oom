@@ -1,0 +1,11 @@
+---
+# - name: remove oom directory
+#   file:
+#     path: "{{ oom_path }}"
+#     state: absent
+
+# - name: "clone oom {{oom_branch}}"
+#   git:
+#     repo: "{{ oom_url }}"
+#     dest: "{{ oom_path }}"
+#     version: "{{ oom_branch }}"
