@@ -8,7 +8,7 @@
 
 - name: update quotas for OOM
   os_quota:
-    name: admin
+    name: "{{ oom_project_name}}"
     cores: 320
     ram: 327680
     gigabytes: 2000
