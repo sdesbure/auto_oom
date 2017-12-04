@@ -53,7 +53,6 @@
 - name: launch installation
   shell:
     "export OPENSTACK_PRIVATE_KEY_PATH={{ private_key_name }} && \
-     ./setenv.bash && \
      ./createAll.bash -n {{ onap_namespace }}"
   args:
     chdir: "{{ oom_path }}/kubernetes/oneclick"
